@@ -1,3 +1,7 @@
+"""
+Module: Web Crawling
+"""
+
 import requests
 from utils.utils import create_month_range
 import os
