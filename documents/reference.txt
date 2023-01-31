@@ -1,0 +1,17 @@
+
+url:
+https://www.saopaulo.sp.leg.br/transparencia/custos-de-mandato 
+
+Git hub:
+https://github.com/ANDREPAIVAMACEDO/cifra_edil
+
+Board:
+https://excalidraw.com/#room=87d26100a435678eca04,dZmMxnchdKqXkPaqQjZJCA
+
+Tech:
+https://streamlit.io/
+
+https://selenium-python.readthedocs.io/
+
+https://www.scrapingbee.com/blog/selenium-python/
+
