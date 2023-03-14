@@ -3,7 +3,8 @@ import streamlit as st
 import datetime
 import locale
 import numpy as np
-import plost
+import altair as alt
+
 
 locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
 
@@ -42,6 +43,60 @@ def main():
 
     # Definição das TABs
     tab1, tab2 = st.tabs(['Geral', 'Vereador'])
+    # ------------------------------------------------------------------ TAB GERAL
+    with tab1:
+        # BIG NUMBERS
+        col1, col2, col3 = st.columns(3)
+
+        # qtde vereadores
+        col1.metric(label='Vereadores', value=len(df_periodo['vereador'].drop_duplicates()))
+        # valot total reembolso
+        vt = sum(df_periodo['valor'])
+        col2.metric(label='Valor Total Reembolsado', value=locale.currency(vt, grouping=True))
+        # qtde de reembolsos
+        col3.metric(label='Notas Emitidas', value=len(df_periodo))
+
+        # Distribuição media mensal reembolso
+        st.write('### Distribuição do Reembolso Médio Mensal')
+        df_vereador_mes = df_periodo.groupby(['mes_ano', 'vereador']).agg({
+            'valor': sum
+        }).reset_index(drop=False)
+        df_vereador_avg = df_vereador_mes.groupby(['vereador']).agg({'valor': np.mean})
+        chart = alt.Chart(df_vereador_avg).mark_bar().encode(
+            x=alt.X('valor:Q', bin=True, axis=alt.Axis(title='Reembolso Médio Mensal (R$)')),
+            y=alt.Y('count()', axis=alt.Axis(title='Qtde Vereadores'))
+        )
+        st.altair_chart(chart, theme="streamlit", use_container_width=True)
+        # chart = alt.Chart(df_vereador_avg[['valor']]).transform_density(
+        #     'valor', as_=['CHARGES', 'DENSITY'],
+        # ).mark_area(color='green').encode(
+        #     x="CHARGES:Q",
+        #     y='DENSITY:Q',
+        # )
+        # st.altair_chart(chart, theme="streamlit", use_container_width=True)
+
+        # Empilhamento por categoria
+        st.write('### Evolução Mensal Por Categoria')
+        df_cat = df_periodo.groupby(['mes_ano', 'categoria']).agg({'valor': sum}).reset_index(drop=False)
+        chart = alt.Chart(df_cat).mark_bar().encode(
+            x=alt.X('sum(valor)', stack="normalize", axis=alt.Axis(title='Porcentagem por Categoria')),
+            y=alt.Y('mes_ano', axis=alt.Axis(title='ano/mês')),
+            color='categoria'
+        )
+        st.altair_chart(chart, theme='streamlit', use_container_width=True)
+
+        # TOP vereadores mais gastões
+        df_rank_vereador = df_vereador_avg.sort_values(['valor'], ascending=False).reset_index(drop=False)
+        df_rank_vereador['valor'] = [locale.currency(v, grouping=True) for v in df_rank_vereador['valor']]
+        df_rank_vereador = df_rank_vereador.rename(columns={'vereador': 'Vereador', 'valor': 'Valor Médio Mensal'})
+
+        col1, col2 = st.columns(2)
+        col1.write('### Vereadores Mais Reembolsados')
+        col1.dataframe(df_rank_vereador.head(10))
+        col2.write('### Vereadores Menos Reembolsados')
+        col2.dataframe(df_rank_vereador.tail(10).sort_index(ascending=False))
+
+    # ------------------------------------------------------------------ TAB VEREADOR
     with tab2:
         df_vereador = df_periodo.loc[df_periodo['vereador'] == vereador]
 
@@ -76,34 +131,42 @@ def main():
         st.bar_chart(df_barras, x='Mês', y='Valor Reembolsado')
 
         # Principais Categorias
-        st.write('### Top Categorias')
+        col1, col2 = st.columns(2)
+        col1.write('### Top Categorias')
         vt_categoria = df_vereador.groupby(['categoria']).agg({'valor': sum}).reset_index(drop=False)
         vt_categoria = vt_categoria.sort_values(['valor'], ascending=False).reset_index(drop=True)
         vt_cat_group = vt_categoria.loc[0:4]
-        vt_cat_group.loc[5,:] = ['outros', sum(vt_categoria['valor'][5:])]
+        vt_cat_group.loc[5,:] = ['OUTROS', sum(vt_categoria['valor'][5:])]
         vt_cat_group = vt_cat_group.rename(columns={'categoria': 'Categoria', 'valor': 'Valor Reembolsado'})
-        plost.pie_chart(
-            data=vt_cat_group,
-            theta='Valor Reembolsado',
-            color='Categoria',
-            height=480
+
+        chart = alt.Chart(vt_cat_group).mark_arc().encode(
+            theta=alt.Theta(field="Valor Reembolsado", type="quantitative"),
+            color=alt.Color(field="Categoria", type="nominal"),
         )
+        col1.altair_chart(chart, theme="streamlit", use_container_width=True)
+
 
         # Principais CNPJs
-        st.write('### Top Emissores')
+        col2.write('### Top Emissores')
         vt_emissor = df_vereador.groupby(['rs_emissor']).agg({'valor': sum}).reset_index(drop=False)
-        vt_emissor = vt_emissor.nlargest(n=5, columns=['valor'])
+        vt_emissor = vt_emissor.nlargest(n=10, columns=['valor'])
         vt_emissor['rs_emissor'] = [
             f'{i} {cat}'
             for cat, i in zip(vt_emissor['rs_emissor'], range(len(vt_emissor)))
         ]
         vt_emissor = vt_emissor.rename(columns={'rs_emissor': 'Emissor', 'valor': 'Valor Reembolsado'})
-        plost.bar_chart(
-            data=vt_emissor,
-            bar='Emissor', value='Valor Reembolsado',
-            direction='horizontal', height=480,
-        )
 
+        chart = alt.Chart(vt_emissor).mark_bar().encode(
+            x='Valor Reembolsado:Q',
+            y="Emissor:O"
+        )
+        col2.altair_chart(chart, theme="streamlit", use_container_width=True)
+
+        # plost.bar_chart(
+        #     data=vt_emissor,
+        #     bar='Emissor', value='Valor Reembolsado',
+        #     direction='horizontal', height=480,
+        # )
 
         # Example data
 
