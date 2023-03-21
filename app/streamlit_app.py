@@ -96,6 +96,37 @@ def main():
         col2.write('### Vereadores Menos Reembolsados')
         col2.dataframe(df_rank_vereador.tail(10).sort_index(ascending=False))
 
+        # OUTLIERS POR CATEGORIA
+        df_cat = df_periodo.groupby(['categoria'])['valor'].agg([
+            ('q25', lambda x: np.quantile(x, 0.25)),
+            ('q75', lambda x: np.quantile(x, 0.75)),
+            ('amostra', len)
+        ]).reset_index(drop=False)
+        # definicao de outlier: x > Q75 + 1.5*(Q75 - Q25)
+        df_cat['limite_superior'] = [
+            q75 + 1.5*(q75 - q25) for q75, q25 in
+            zip(df_cat['q75'], df_cat['q25'])
+        ]
+        df_outlier = pd.merge(df_periodo, df_cat, on='categoria', how='inner')
+        df_outlier = df_outlier.loc[
+            df_outlier['valor'] >= df_outlier['limite_superior']
+        ]
+        df_outlier['valor_sobre_ls'] = df_outlier['valor']/df_outlier['limite_superior']
+        # removendo notas emitidas pela camara
+        df_outlier = df_outlier.loc[df_outlier['rs_emissor'] != 'CAMARA MUNICIPAL DE SÃO PAULO']
+
+        # scatter plot
+        df_scat = df_outlier[['categoria', 'valor', 'mes_ano', 'valor_sobre_ls']]
+        chart = alt.Chart(df_scat).mark_circle().encode(
+            alt.X('mes_ano'),
+            alt.Y('valor'),
+            color='categoria',
+            size='valor_sobre_ls'
+        )
+        st.altair_chart(chart, theme="streamlit", use_container_width=True)
+
+        df_vereadores_out = df_outlier['vereador'].value_counts()
+
     # ------------------------------------------------------------------ TAB VEREADOR
     with tab2:
         df_vereador = df_periodo.loc[df_periodo['vereador'] == vereador]
@@ -145,7 +176,6 @@ def main():
         )
         col1.altair_chart(chart, theme="streamlit", use_container_width=True)
 
-
         # Principais CNPJs
         col2.write('### Top Emissores')
         vt_emissor = df_vereador.groupby(['rs_emissor']).agg({'valor': sum}).reset_index(drop=False)
@@ -162,16 +192,21 @@ def main():
         )
         col2.altair_chart(chart, theme="streamlit", use_container_width=True)
 
-        # plost.bar_chart(
-        #     data=vt_emissor,
-        #     bar='Emissor', value='Valor Reembolsado',
-        #     direction='horizontal', height=480,
-        # )
+        # Outliers
+        st.write('### Notas de Valor Elevado (Outliers)')
+        df_out_vereador = df_outlier.loc[df_outlier['vereador']==vereador]
+        df_scat_v = df_out_vereador[['categoria', 'valor', 'mes_ano', 'valor_sobre_ls']]
+        chart = alt.Chart(df_scat_v).mark_circle().encode(
+            alt.X('mes_ano'),
+            alt.Y('valor'),
+            color='categoria',
+            size='valor_sobre_ls'
+        )
+        st.altair_chart(chart, theme="streamlit", use_container_width=True)
+        st.write('*Obs²: Outliers são notas cujo valor supera o limite estabelecido pelos quartis* ' +\
+                 '*obtidos por cada categoria (`q75 + 1.5(q75 - q25)`)* ' +\
+                 '\n\n *Obs²: Notas emitidas pelo CNPJ da Câmara Municipal não foram consideradas*')
 
-        # Example data
-
-        # TABELAO
-        # st.dataframe(df_vereador)
 
 @st.cache_data()
 def read_data():
