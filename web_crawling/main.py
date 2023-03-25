@@ -39,4 +39,5 @@ def web_crawling_main():
 
 
 if __name__ == '__main__':
+    print(os.getcwd())
     web_crawling_main()

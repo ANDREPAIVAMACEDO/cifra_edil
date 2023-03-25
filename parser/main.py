@@ -97,3 +97,7 @@ def main():
             df = df.append(df_path).reset_index(drop=True)
 
     df.to_csv('full_expense.csv', index=False)
+
+
+if __name__ == "__main__":
+    main()
