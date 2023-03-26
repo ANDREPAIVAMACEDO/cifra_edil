@@ -10,8 +10,11 @@ def create_month_range(year_month_start: str, year_month_end: str = None) -> lis
     :return: list with year-month elements
     """
 
+    # if year_month_end is None:
+    #     year_month_end = f'{datetime.now().year}-{datetime.now().month if datetime.now().month > 9 else f"0{datetime.now().month}"}'
+
     if year_month_end is None:
-        year_month_end = f'{datetime.now().year}-{datetime.now().month if datetime.now().month > 9 else f"0{datetime.now().month}"}'
+        year_month_end = datetime.now().strftime("%Y-%m")
 
     month_list = pd.date_range(
         f'{year_month_start}-01',

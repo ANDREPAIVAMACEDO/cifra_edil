@@ -8,23 +8,31 @@ from datetime import date
 
 locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
 
-
 def main():
-    # Config cabeçalho e titula pagina
+    # Config header e title for web page;
     st.set_page_config(page_title='Análise de Reembolsos - Câmara Municipal SP', layout='wide')
     st.title('✍ Análise de Reembolsos')
 
-    # leitura data frame
+    # Read data frame:
     df = read_data()
     anos = list(df['ano'].drop_duplicates())
     anos.sort()
 
-    # Menu Esquerdo
+    # Left Menu:
     with st.sidebar:
         mandatos = list(df['mandato'].drop_duplicates())
         mandatos.sort()
         mandato = st.selectbox(label='Selecione o Período de Mandato', options=mandatos)
         df_periodo = df.loc[df['mandato'] == mandato]
+
+        df_periodo = df.loc[(df['datetime'] >= ano_start) & (df['datetime'] <= ano_end)]
+        vereadores = list(df_periodo['vereador'].unique())
+        vereadores.sort()
+
+        vereador = st.sidebar.selectbox(
+            'Selecione o vereador',
+            options=vereadores
+        )
 
     # Definição das TABs
     tab1, tab2 = st.tabs(['Geral', 'Vereador'])
@@ -63,7 +71,7 @@ def main():
         )
         st.altair_chart(chart, theme='streamlit', use_container_width=True)
 
-        # OUTLIERS POR CATEGORIA
+        # OUTLIERS by category
         df_cat = df_periodo.groupby(['categoria'])['valor'].agg([
             ('q25', lambda x: np.quantile(x, 0.25)),
             ('q75', lambda x: np.quantile(x, 0.75)),
@@ -273,7 +281,6 @@ def read_data():
         for x in df['mes_ano']
     ]
     return df
-
 
 if __name__ == '__main__':
     main()
