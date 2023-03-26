@@ -52,13 +52,6 @@ def main():
             y=alt.Y('count()', axis=alt.Axis(title='Qtde Vereadores'))
         )
         st.altair_chart(chart, theme="streamlit", use_container_width=True)
-        # chart = alt.Chart(df_vereador_avg[['valor']]).transform_density(
-        #     'valor', as_=['CHARGES', 'DENSITY'],
-        # ).mark_area(color='green').encode(
-        #     x="CHARGES:Q",
-        #     y='DENSITY:Q',
-        # )
-        # st.altair_chart(chart, theme="streamlit", use_container_width=True)
 
         # Empilhamento por categoria
         st.write('#### Evolução Mensal Por Categoria')
@@ -148,7 +141,6 @@ def main():
         col2.dataframe(df_rank_vereador.tail(10).sort_index(ascending=False))
         col3.write('#### Vereadores com mais NF de valor elevado')
         col3.dataframe(df_rank_outlier.head(10).sort_index(ascending=False))
-
 
     # ------------------------------------------------------------------ TAB VEREADOR
     with tab2:
