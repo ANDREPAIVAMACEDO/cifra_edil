@@ -2,7 +2,10 @@ import datetime
 import pandas as pd
 import os
 import time
+from utils.utils import clean_text
 from bs4 import BeautifulSoup
+from bs4.element import Tag
+
 
 def extract_dict_table_names(bs4_object):
     tabelas = bs4_object.find_all('table')
@@ -19,6 +22,7 @@ def extract_dict_table_names(bs4_object):
         name: table
         for name, table in zip(vereadores, tabelas_vereadores)
     }
+
 
 def build_single_expense_df(single_expense_tb):
     rows = single_expense_tb.find_all('tr')
@@ -51,6 +55,7 @@ def build_single_expense_df(single_expense_tb):
     df = pd.DataFrame(categoria_dict)
     return df
 
+
 def build_all_expense_df(path):
     with open(path, "r", encoding="utf8") as HTMLFile:
         plain_text = HTMLFile.read()
@@ -66,6 +71,41 @@ def build_all_expense_df(path):
         df_vereador['vereador'] = vereador
         df = df.append(df_vereador).reset_index(drop=True)
     return df
+
+
+def extract_parties():
+    with open('html_files/vereadores_legendas.htm', "r", encoding="utf8") as HTMLFile:
+        plain_text = HTMLFile.read()
+    bs4_obj = BeautifulSoup(plain_text, 'lxml')
+
+    def extract_urls(bs4_tag: Tag):
+        try:
+            d = {
+                'vereador': bs4_tag.find('a',  href=True).find('img')['alt'],
+                'vereador_bio': bs4_tag.find('a',  href=True)['href'],
+                'vereador_image': bs4_tag.find('a',  href=True).find('img')['src'],
+                'partido': bs4_tag.parent.find(class_='vereador-party').find('img')['title'],
+                'partido_image': bs4_tag.parent.find(class_='vereador-party').find('img')['src']
+            }
+        except:
+            d = {
+                'vereador': None,
+                'vereador_bio': None,
+                'vereador_image': None,
+                'partido': None,
+                'partido_image': None
+            }
+        return d
+
+    tag_list = bs4_obj.find_all(class_='vereador-picture')
+    vereadores_info = [
+        extract_urls(tag) for tag in tag_list
+    ]
+    vereadores_info = {
+        clean_text(d['vereador']): d for d in vereadores_info
+    }
+    return vereadores_info
+
 
 def main():
     
@@ -85,6 +125,7 @@ def main():
     end_datetime = datetime.datetime.fromtimestamp(end_time)
     print(f'Ending parser at: {end_datetime}')
     print(f'Total execution time: {end_time - start_time:.2f} seconds')
-    
+
+
 if __name__ == '__main__':
     main()

@@ -5,6 +5,8 @@ import locale
 import numpy as np
 import altair as alt
 from datetime import date
+from parser_html.main import extract_parties
+from utils.utils import clean_text
 
 locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
 
@@ -42,6 +44,7 @@ def main():
         col3.metric(label='Notas Emitidas', value=len(df_periodo))
 
         # Distribuição media mensal reembolso
+        st.write('----')
         st.write('#### Distribuição do Reembolso Médio Mensal')
         df_vereador_mes = df_periodo.groupby(['mes_ano', 'vereador']).agg({
             'valor': sum
@@ -54,6 +57,7 @@ def main():
         st.altair_chart(chart, theme="streamlit", use_container_width=True)
 
         # Empilhamento por categoria
+        st.write('----')
         st.write('#### Evolução Mensal Por Categoria')
         df_cat = df_periodo.groupby(['mes_ano', 'categoria']).agg({'valor': sum}).reset_index(drop=False)
         chart = alt.Chart(df_cat).mark_bar().encode(
@@ -83,6 +87,7 @@ def main():
         df_outlier = df_outlier.loc[df_outlier['rs_emissor'] != 'CAMARA MUNICIPAL DE SÃO PAULO']
 
         # limites por categoria
+        st.write('----')
         st.write('#### Distribuição Normal de Valores de NF por Categoria')
         col1, col2, col3 = st.columns(3)
         cats = df_periodo['categoria'].drop_duplicates().sort_values()
@@ -134,13 +139,14 @@ def main():
         df_rank_outlier = df_rank_outlier.sort_values('qtde', ascending=False)
         df_rank_outlier = df_rank_outlier.rename(columns={'qtde': 'Qtde de Outliers'})
 
+        st.write('----')
         col1, col2, col3 = st.columns(3)
         col1.write('#### Vereadores **mais** Reembolsados')
         col1.dataframe(df_rank_vereador.head(10))
-        col2.write('#### Vereadores **menos** meembolsados')
+        col2.write('#### Vereadores **menos** Reembolsados')
         col2.dataframe(df_rank_vereador.tail(10).sort_index(ascending=False))
         col3.write('#### Vereadores com mais NF de valor elevado')
-        col3.dataframe(df_rank_outlier.head(10).sort_index(ascending=False))
+        col3.dataframe(df_rank_outlier.head(10))
 
     # ------------------------------------------------------------------ TAB VEREADOR
     with tab2:
@@ -154,6 +160,18 @@ def main():
         df_vereador = df_periodo.loc[df_periodo['vereador'] == vereador]
 
         st.write(f'## {vereador}')
+
+        # VEREADOR INFO
+        vereadores_dict = extract_parties()
+        clean_name = clean_text(vereador)
+        if clean_name in vereadores_dict.keys():
+            v_dict = vereadores_dict[clean_name]
+            col1, col2, col3, col4 = st.columns(4)
+            col1.image(v_dict['vereador_image'])
+            col1.write(f"**Biografia**: [Link Câmara Municipal]({v_dict['vereador_bio']})")
+            col2.write(f"#### Partido: {v_dict['partido'].upper()}")
+            col2.image(v_dict['partido_image'], width=100)
+            st.write('----')
 
         # BIG NUMBERS
         st.write('#### Indicadores')
@@ -177,6 +195,7 @@ def main():
         col3.metric(label="Posição no Ranking de Maior Média Mensal", value=f"{rank}º")
 
         # Evolução historica
+        st.write('----')
         st.write('#### Evolução Mensal')
         df_barras = vt_mensais.reset_index(drop=False)
         df_barras = df_barras.sort_values(['mes_ano'])
@@ -184,6 +203,7 @@ def main():
         st.bar_chart(df_barras, x='Mês', y='Valor Reembolsado')
 
         # Principais Categorias
+        st.write('----')
         col1, col2 = st.columns(2)
         col1.write('#### Top Categorias')
         vt_categoria = df_vereador.groupby(['categoria']).agg({'valor': sum}).reset_index(drop=False)
@@ -221,6 +241,7 @@ def main():
         col2.altair_chart(chart, theme="streamlit", use_container_width=True)
 
         # Outliers
+        st.write('----')
         st.write('#### Notas de Valor Elevado (Outliers)')
         df_out_vereador = df_outlier.loc[df_outlier['vereador']==vereador]
         df_out_vereador = df_out_vereador.rename(columns={'valor_sobre_ls': 'proporcao_relacao_LS'})
@@ -245,6 +266,7 @@ def main():
                  '*obtidos por cada categoria (`q75 + 1.5(q75 - q25)`)* ' +\
                  '\n\n *Obs²: Notas emitidas pelo CNPJ da Câmara Municipal não foram consideradas*')
 
+        st.write('----')
         st.write('#### Lista de Notas de Valor Elevado (Outliers)')
         df_out_vereador = df_out_vereador.sort_values(['proporcao_relacao_LS'], ascending=False)
         df_out_vereador['valor'] = df_out_vereador['valor'].apply(lambda x: locale.currency(x, grouping=True))

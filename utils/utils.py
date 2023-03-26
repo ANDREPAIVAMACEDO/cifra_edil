@@ -1,5 +1,8 @@
 from datetime import datetime
 import pandas as pd
+from unicodedata import normalize
+import re
+import string
 
 
 def create_month_range(year_month_start: str, year_month_end: str = None) -> list:
@@ -23,3 +26,15 @@ def create_month_range(year_month_start: str, year_month_end: str = None) -> lis
     ).tolist()
 
     return [datetime.strftime(t, '%Y-%m') for t in month_list]
+
+
+def clean_text(sentence, clear_digit=True, clear_punct=True):
+    sentence = normalize('NFKD', sentence.upper()).encode('ASCII', 'ignore').decode('ASCII')
+    if clear_digit:
+        sentence = re.sub(r'\d', '', sentence)
+    if clear_punct:
+        punct_regex = re.compile('[%s]' % re.escape(string.punctuation))
+        sentence = punct_regex.sub('', sentence)
+    sentence = sentence.strip()
+    sentence = ''.join(sentence.split(' '))
+    return sentence
