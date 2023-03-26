@@ -5,21 +5,19 @@ import locale
 import numpy as np
 import altair as alt
 
-
 locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
 
-
 def main():
-    # Config cabeçalho e titula pagina
+    # Config header e title for web page;
     st.set_page_config(page_title='Análise de Reembolsos - Câmara Municipal SP', layout='wide')
     st.title('✍ Análise de Reembolsos')
 
-    # leitura data frame
+    # Read data frame:
     df = read_data()
     anos = list(df['ano'].drop_duplicates())
     anos.sort()
 
-    # Menu Esquerdo
+    # Left Menu:
     with st.sidebar:
         ano_start = st.date_input(
             label='Selecione a data inicial da análise',
@@ -41,7 +39,7 @@ def main():
             options=vereadores
         )
 
-    # Definição das TABs
+    # TAB's Definition:
     tab1, tab2 = st.tabs(['Geral', 'Vereador'])
     # ------------------------------------------------------------------ TAB GERAL
     with tab1:
@@ -67,13 +65,6 @@ def main():
             y=alt.Y('count()', axis=alt.Axis(title='Qtde Vereadores'))
         )
         st.altair_chart(chart, theme="streamlit", use_container_width=True)
-        # chart = alt.Chart(df_vereador_avg[['valor']]).transform_density(
-        #     'valor', as_=['CHARGES', 'DENSITY'],
-        # ).mark_area(color='green').encode(
-        #     x="CHARGES:Q",
-        #     y='DENSITY:Q',
-        # )
-        # st.altair_chart(chart, theme="streamlit", use_container_width=True)
 
         # Empilhamento por categoria
         st.write('### Evolução Mensal Por Categoria')
@@ -85,7 +76,7 @@ def main():
         )
         st.altair_chart(chart, theme='streamlit', use_container_width=True)
 
-        # TOP vereadores mais gastões
+        # TOP vereadores maior gasto
         df_rank_vereador = df_vereador_avg.sort_values(['valor'], ascending=False).reset_index(drop=False)
         df_rank_vereador['valor'] = [locale.currency(v, grouping=True) for v in df_rank_vereador['valor']]
         df_rank_vereador = df_rank_vereador.rename(columns={'vereador': 'Vereador', 'valor': 'Valor Médio Mensal'})
@@ -96,7 +87,7 @@ def main():
         col2.write('### Vereadores Menos Reembolsados')
         col2.dataframe(df_rank_vereador.tail(10).sort_index(ascending=False))
 
-        # OUTLIERS POR CATEGORIA
+        # OUTLIERS by category
         df_cat = df_periodo.groupby(['categoria'])['valor'].agg([
             ('q25', lambda x: np.quantile(x, 0.25)),
             ('q75', lambda x: np.quantile(x, 0.75)),
@@ -207,7 +198,6 @@ def main():
                  '*obtidos por cada categoria (`q75 + 1.5(q75 - q25)`)* ' +\
                  '\n\n *Obs²: Notas emitidas pelo CNPJ da Câmara Municipal não foram consideradas*')
 
-
 @st.cache_data()
 def read_data():
     df = pd.read_csv('full_expense.csv')
@@ -218,7 +208,6 @@ def read_data():
         datetime.datetime.strptime(data, '%Y-%m').date() for data in df['mes_ano']
     ]
     return df
-
 
 if __name__ == '__main__':
     main()

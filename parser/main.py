@@ -1,13 +1,10 @@
-from bs4 import BeautifulSoup
+import datetime
 import pandas as pd
 import os
-
+import time
+from bs4 import BeautifulSoup
 
 def extract_dict_table_names(bs4_object):
-    """
-    :param bs4_object:
-    :return:
-    """
     tabelas = bs4_object.find_all('table')
     indices = []
     vereadores = []
@@ -23,13 +20,7 @@ def extract_dict_table_names(bs4_object):
         for name, table in zip(vereadores, tabelas_vereadores)
     }
 
-
 def build_single_expense_df(single_expense_tb):
-    """
-    :param single_expense_tb:
-    :return:
-    """
-    # define row type
     rows = single_expense_tb.find_all('tr')
 
     categoria = '-'
@@ -60,15 +51,11 @@ def build_single_expense_df(single_expense_tb):
     df = pd.DataFrame(categoria_dict)
     return df
 
-
 def build_all_expense_df(path):
-
-    # Opening the html file
-    HTMLFile = open(path, "r", encoding="utf8")
-    plain_text = HTMLFile.read()
-    # Creating a BeautifulSoup object and specifying the parser
+    with open(path, "r", encoding="utf8") as HTMLFile:
+        plain_text = HTMLFile.read()
+        
     bs4_obj = BeautifulSoup(plain_text, 'lxml')
-    # bs4_obj = BeautifulSoup(plain_text, 'html.parser')
 
     dict_tables = extract_dict_table_names(bs4_obj)
 
@@ -80,20 +67,24 @@ def build_all_expense_df(path):
         df = df.append(df_vereador).reset_index(drop=True)
     return df
 
-
 def main():
-
-    # listar os arquivos
+    
+    start_time = time.time()
+    start_datetime = datetime.datetime.fromtimestamp(start_time)
+    print(f'Starting parser at: {start_datetime}')
+    
     root_path = 'html_files'
     lista_arquivos = os.listdir(root_path)
 
-    df = pd.DataFrame()
-    for file in lista_arquivos:
-        print(file)
-        if 'despesas' in file:
-            path = f'{root_path}/{file}'
-            df_path = build_all_expense_df(path)
-            df_path['mes_ano'] = file.replace('despesas_', '').replace('.htm', '')
-            df = df.append(df_path).reset_index(drop=True)
+    df = pd.concat([build_all_expense_df(os.path.join(root_path, file)).assign(mes_ano=file.replace('despesas_', '').replace('.htm', ''))
+                    for file in lista_arquivos if 'despesas' in file], ignore_index=True)
 
     df.to_csv('full_expense.csv', index=False)
+    
+    end_time = time.time()
+    end_datetime = datetime.datetime.fromtimestamp(end_time)
+    print(f'Ending parser at: {end_datetime}')
+    print(f'Total execution time: {end_time - start_time:.2f} seconds')
+    
+if __name__ == '__main__':
+    main()
