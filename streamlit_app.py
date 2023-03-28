@@ -109,16 +109,18 @@ def main():
         source = pd.DataFrame({
             'valor': x,
             'densidade': y,
-            'limite': limite
+            'limite': limite,
+            'legenda': 'Limite Superior'
         })
         base = alt.Chart(source)
-        chart1 = base.mark_area(opacity=0.5).encode(
+        chart1 = base.mark_area(opacity=0.3, color='darkblue').encode(
             x=alt.X('valor', title='Valor NF (R$)'),
             y='densidade:Q'
         )
         chart2 = base.mark_rule(color='red').encode(
             x='mean(limite):Q',
-            size=alt.value(5)
+            size=alt.value(5),
+            color='legenda'
         )
         chart = chart1 + chart2
 

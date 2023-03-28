@@ -5,6 +5,7 @@ import time
 from utils.utils import clean_text
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+from tqdm import tqdm
 
 
 def extract_dict_table_names(bs4_object):
@@ -107,25 +108,25 @@ def extract_parties():
     return vereadores_info
 
 
-def main():
-    
-    start_time = time.time()
-    start_datetime = datetime.datetime.fromtimestamp(start_time)
-    print(f'Starting parser at: {start_datetime}')
-    
+def parser_main():
+
     root_path = 'html_files'
     lista_arquivos = os.listdir(root_path)
+    lista_arquivos = [f for f in lista_arquivos if 'despesas' in f]
 
-    df = pd.concat([build_all_expense_df(os.path.join(root_path, file)).assign(mes_ano=file.replace('despesas_', '').replace('.htm', ''))
-                    for file in lista_arquivos if 'despesas' in file], ignore_index=True)
+    df = pd.DataFrame()
+    for i in tqdm(range(len(lista_arquivos))):
+        file = lista_arquivos[i]
+        df_aux = build_all_expense_df(os.path.join(root_path, file))
+        if len(df_aux) == 0:
+            print(f'Dados para o mês {file} não disponíveis')
+            os.remove(os.path.join(root_path, file))
+        else:
+            df_aux['mes_ano'] = file.replace('despesas_', '').replace('.htm', '')
+            df = df.append(df_aux)
 
     df.to_csv('full_expense.csv', index=False)
-    
-    end_time = time.time()
-    end_datetime = datetime.datetime.fromtimestamp(end_time)
-    print(f'Ending parser at: {end_datetime}')
-    print(f'Total execution time: {end_time - start_time:.2f} seconds')
 
 
 if __name__ == '__main__':
-    main()
+    parser_main()

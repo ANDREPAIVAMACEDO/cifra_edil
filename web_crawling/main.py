@@ -12,28 +12,23 @@ from utils.utils import create_month_range
 import sys
 #sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-def web_crawling_main():
+
+def web_crawling_main(start_at: str = None):
     """
     Main function to run the web crawling process.
     """
-    start_time = time.time()
-    start_datetime = datetime.datetime.fromtimestamp(start_time)
-    print(f'Starting web crawling process at: {start_datetime}')
-
     print('Get Expenses Process')
-    get_expenses()
+    get_expenses(start_at)
     print('Get Parties Process')
     get_parties()
 
-    end_time = time.time()
-    end_datetime = datetime.datetime.fromtimestamp(end_time)
-    print(f'Ending web crawling process at: {end_datetime}')
-    print(f'Total execution time: {end_time - start_time:.2f} seconds')
 
+def get_expenses(start_at: str = None):
 
-def get_expenses():
+    if start_at is None:
+        start_at = '2015-01'
 
-    month_list = create_month_range(year_month_start='2015-01')
+    month_list = create_month_range(year_month_start=start_at)
     base_url = 'https://sisgvarmazenamento.blob.core.windows.net/prd/PublicacaoPortal/Arquivos/'
 
     for m in month_list:
