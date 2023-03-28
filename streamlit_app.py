@@ -95,6 +95,7 @@ def main():
         df_categoria = df_periodo.loc[df_periodo['categoria'] == cat]
 
         u = df_categoria['valor'].mean()
+        median = np.median(df_categoria['valor'])
         sd = df_categoria['valor'].std()
         n = len(df_categoria)
         limite = list(df_cat.loc[df_cat['categoria']==cat, 'limite_superior'])[0]
@@ -109,26 +110,28 @@ def main():
         source = pd.DataFrame({
             'valor': x,
             'densidade': y,
-            'limite': limite,
-            'legenda': 'Limite Superior'
         })
-        base = alt.Chart(source)
-        chart1 = base.mark_area(opacity=0.3, color='darkblue').encode(
+        chart1 = alt.Chart(source).mark_area(opacity=0.5).encode(
             x=alt.X('valor', title='Valor NF (R$)'),
             y='densidade:Q'
         )
-        chart2 = base.mark_rule(color='red').encode(
-            x='mean(limite):Q',
+        source = pd.DataFrame({
+            'valor': [limite, median],
+            'legenda': ['Limite Superior Calculado', 'Mediana']
+        })
+        scale = alt.Scale(domain=["Limite Superior Calculado", "Mediana"], range=['red', 'lightblue'])
+        chart2 = alt.Chart(source).mark_rule(color='red', opacity=0.75).encode(
+            x='valor:Q',
             size=alt.value(5),
-            color='legenda'
+            color=alt.Color('legenda:N', scale=scale)
         )
         chart = chart1 + chart2
 
         st.write(f'**Tamanho da Amostra**: {n} NF')
         st.write(f'**Média**: {locale.currency(u, grouping=True)}')
         st.write(f'**Desvio Padrão**: {locale.currency(sd, grouping=True)}')
-        st.write(f'**Limite Calculado**: {locale.currency(limite, grouping=True)}')
-        st.write('Limite calculado através do intervalo interquartil (`q75 + 1.5(q75 - q25)`)')
+        st.write(f'**Limite Superior Calculado**: {locale.currency(limite, grouping=True)}')
+        st.write('Limite superior calculado através do intervalo interquartil (`q75 + 1.5(q75 - q25)`)')
         st.altair_chart(chart, theme='streamlit', use_container_width=True)
 
         # TOP vereadores mais/menos gastoes e Mais outliers
@@ -244,7 +247,7 @@ def main():
 
         # Outliers
         st.write('----')
-        st.write('#### Notas de Valor Elevado (Outliers)')
+        st.write('#### Ocorrências de Notas acima do Limite Calculado (Outliers)')
         df_out_vereador = df_outlier.loc[df_outlier['vereador']==vereador]
         df_out_vereador = df_out_vereador.rename(columns={'valor_sobre_ls': 'proporcao_relacao_LS'})
         df_out_vereador['mes_ano'] = [
@@ -264,7 +267,7 @@ def main():
             titleFontSize=15
         )
         st.altair_chart(chart, theme="streamlit", use_container_width=True)
-        st.write('*Obs²: Outliers são notas cujo valor supera o limite estabelecido pelos quartis* ' +\
+        st.write('*Obs²: Outliers são notas cujo valor supera o limite superior calculado pelos quartis* ' +\
                  '*obtidos por cada categoria (`q75 + 1.5(q75 - q25)`)* ' +\
                  '\n\n *Obs²: Notas emitidas pelo CNPJ da Câmara Municipal não foram consideradas*')
 
