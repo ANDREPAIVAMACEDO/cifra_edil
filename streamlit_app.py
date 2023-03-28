@@ -25,6 +25,7 @@ def main():
     with st.sidebar:
         mandatos = list(df['mandato'].drop_duplicates())
         mandatos.sort()
+        mandatos.reverse()
         mandato = st.selectbox(label='Selecione o Período de Mandato', options=mandatos)
         df_periodo = df.loc[df['mandato'] == mandato]
 
