@@ -30,7 +30,7 @@ def main():
         df_periodo = df.loc[df['mandato'] == mandato]
 
     # Definição das TABs
-    tab1, tab2 = st.tabs(['Geral', 'Vereador'])
+    tab1, tab2, tab3 = st.tabs(['Geral', 'Vereador', 'Leia-me'])
     # ------------------------------------------------------------------ TAB GERAL
     with tab1:
         # BIG NUMBERS
@@ -282,9 +282,82 @@ def main():
             'valor', 'proporcao_relacao_LS', 'mes_ano', 'cnpj_emissor', 'rs_emissor', 'categoria'
         ]].reset_index(drop=True))
 
+    # ------------------------------------------------------------------ TAB VEREADOR
+    with tab3:
+        st.write(
+            """
+### Objetivo
+Realizar todas as etapas presentes normalmente em um projeto de Análise de Dados, sendo elas:
+* Captura
+* Tratamento
+* Exploratória (Análises Estatísticas)
+* Visualização
+
+Scripts de captura e tratamento implementado em `Python`.
+
+Utilização do pacote `Streamlit` para visualização e disponibilização. 
+
+### Panorama
+Cada Vereador (Cidade de São Paulo - SP) dispõe de uma verba anual de cerca de R$ 385.000,00 destinada 
+ao custeio de serviços gráficos, correios, assinaturas de jornais, deslocamentos por toda a cidade e 
+materiais de escritório, entre outras despesas.
+
+Trata-se do Auxílio-Encargos Gerais de Gabinete, previsto em lei. Dentro desse limite, 
+as despesas realizadas diretamente pelo vereador são ressarcidas mediante a apresentação de 
+notas fiscais ou documentos equivalentes.
+
+O projeto, então, tem como base todas as despesas ressarcidas e disponibilizadas no site da Câmara, desde 2015.
+
+### Metodologia
+Cada NF (Nota Fiscal) de despesa compõe:
+* Solicitante (Verador)
+* Categoria da despesa (Padronizada pela Câmara)
+* Descrição
+* Valor
+* Emissor da Nota (CNPJ e Razão Social)
+* Mês da solicitação
+
+O relatório disponibilizado pela Câmara agrega as notas por vereador, categoria e mês de solicitação.
+
+As análises realizadas neste projeto estão divididas em 2 abas.
+
+#### Aba *Geral*
+Aba destinada às análises das despesas totais (considerando todos os vereadores em um único período de mandato),
+média de reembolso mensal solicitado por vereador, 
+distribuição das despesas ao longo dos meses e a distribuição do valor unitário (por NF) por categoria.
+
+#### Aba *Vereador*
+Análises estatísticas realizadas considerando apenas o conjunto de despesas (NF) de um único vereador, 
+evolução histórica das despesas acumuladas mensais, principais categorias e emissores, e ocorrências de NF
+cujo valor está acima do limite superior calculado para a respectiva categoria.
+
+:red[**IMPORTANTE**]: As NF consideradas como *Outliers* não implicam necessariamente em irregularidades,
+                mas apenas que seus valores foram considerados elevados em relação a uma medida estatística realizada
+                no conjunto de NF de mesma categoria. 
+
+### Bases de Dados
+Todos os dados utilizados (inclusive imagens) no projeto foram coletados das seguintes bases:
+
+* [Câmara Municipal de São Paulo - Reembolsos](https://www.saopaulo.sp.leg.br/relatorio-por-natureza-de-despesa-partir-de-2015/) 
+* [Câmara Municipal de São Paulo - Imagens/Partidos](https://www.saopaulo.sp.leg.br/vereadores/)
+
+### Créditos
+
+📌 [Project Github](https://github.com/ANDREPAIVAMACEDO/cifra_edil)
+
+##### Desenvolvedores:
+  🔎 [André Paiva](https://www.linkedin.com/in/andrepaivamacedo/) / 📌 [Github](https://github.com/ANDREPAIVAMACEDO/Andre_Paiva_Portfolio)  
+       
+  🔎 [André Nascimento](https://www.linkedin.com/in/andre-c-nascimento/)
+  
+  🔎 [Samuel Souza Lima](https://www.linkedin.com/in/samuel-de-souza-lima-moreira-2959b650/)
+
+"""
+        )
+
 @st.cache_data()
 def read_data():
-    df = pd.read_csv('full_expense.csv')
+    df = pd.read_csv('etl_data/full_expense.csv')
     df['ano'] = [
         data.split('-')[0] for data in df['mes_ano']
     ]
