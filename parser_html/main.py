@@ -125,7 +125,9 @@ def parser_main():
             df_aux['mes_ano'] = file.replace('despesas_', '').replace('.htm', '')
             df = df.append(df_aux)
 
-    df.to_csv('full_expense.csv', index=False)
+    if not os.path.exists('etl_data'):
+        os.mkdir('etl_data')
+    df.to_csv('etl_data/full_expense.csv', index=False)
 
 
 if __name__ == '__main__':
