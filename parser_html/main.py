@@ -1,7 +1,5 @@
-import datetime
 import pandas as pd
 import os
-import time
 from utils.utils import clean_text
 from bs4 import BeautifulSoup
 from bs4.element import Tag

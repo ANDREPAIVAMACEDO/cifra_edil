@@ -2,7 +2,7 @@
 Module: Web Crawling
 """
 
-import datetime
+
 import os
 import random
 import requests
