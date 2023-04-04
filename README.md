@@ -12,7 +12,7 @@ pip install -r requirements.txt
 python main_load_data.py
 ```
 
-#### Running Stramlit APP
+#### Running Streamlit APP
 ```bash
 streamlit run stramlit_app.py
 ```
