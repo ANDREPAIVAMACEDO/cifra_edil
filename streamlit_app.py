@@ -1,14 +1,11 @@
 import pandas as pd
 import streamlit as st
 import datetime
-import locale
 import numpy as np
 import altair as alt
 from datetime import date
 from parser_html.main import extract_parties
-from utils.utils import clean_text
-
-locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+from utils.utils import clean_text, to_reais
 
 
 def main():
@@ -40,7 +37,7 @@ def main():
         col1.metric(label='Vereadores', value=len(df_periodo['vereador'].drop_duplicates()))
         # valot total reembolso
         vt = sum(df_periodo['valor'])
-        col2.metric(label='Valor Total Reembolsado', value=locale.currency(vt, grouping=True))
+        col2.metric(label='Valor Total Reembolsado', value=to_reais(vt))
         # qtde de reembolsos
         col3.metric(label='Notas Emitidas', value=len(df_periodo))
 
@@ -129,15 +126,15 @@ def main():
         chart = chart1 + chart2
 
         st.write(f'**Tamanho da Amostra**: {n} NF')
-        st.write(f'**Média**: {locale.currency(u, grouping=True)}')
-        st.write(f'**Desvio Padrão**: {locale.currency(sd, grouping=True)}')
-        st.write(f'**Limite Superior Calculado**: {locale.currency(limite, grouping=True)}')
+        st.write(f'**Média**: {to_reais(u)}')
+        st.write(f'**Desvio Padrão**: {to_reais(sd)}')
+        st.write(f'**Limite Superior Calculado**: {to_reais(limite)}')
         st.write('Limite superior calculado através do intervalo interquartil (`q75 + 1.5(q75 - q25)`)')
         st.altair_chart(chart, theme='streamlit', use_container_width=True)
 
         # TOP vereadores mais/menos gastoes e Mais outliers
         df_rank_vereador = df_vereador_avg.sort_values(['valor'], ascending=False)
-        df_rank_vereador['valor'] = [locale.currency(v, grouping=True) for v in df_rank_vereador['valor']]
+        df_rank_vereador['valor'] = [to_reais(v) for v in df_rank_vereador['valor']]
         df_rank_vereador = df_rank_vereador.rename(columns={'valor': 'Valor Médio Mensal'})
         df_rank_outlier = df_outlier.groupby('vereador').agg(
             qtde=('valor', lambda x: len(x)),
@@ -184,14 +181,14 @@ def main():
         col1, col2, col3 = st.columns(3)
         # valor total de reembolso
         vt = sum(df_vereador['valor'])
-        col1.metric(label="Valor Total Reembolsado", value=locale.currency(vt, grouping=True))
+        col1.metric(label="Valor Total Reembolsado", value=to_reais(vt))
 
         # media reembolso mensal
         vt_mensais = df_vereador.groupby(['mes_ano']).agg({
             'valor': sum
         })
         vt_avg = np.average(vt_mensais)
-        col2.metric(label="Valor Médio Mensal Reembolsado", value=locale.currency(vt_avg, grouping=True))
+        col2.metric(label="Valor Médio Mensal Reembolsado", value=to_reais(vt_avg))
 
         # Posição Ranking de Gastadores
         vt_vereadores_mes = df_periodo.groupby(['vereador', 'mes_ano']).agg({'valor': sum}).reset_index(drop=False)
@@ -275,7 +272,7 @@ def main():
         st.write('----')
         st.write('#### Lista de Notas de Valor Elevado (Outliers)')
         df_out_vereador = df_out_vereador.sort_values(['proporcao_relacao_LS'], ascending=False)
-        df_out_vereador['valor'] = df_out_vereador['valor'].apply(lambda x: locale.currency(x, grouping=True))
+        df_out_vereador['valor'] = df_out_vereador['valor'].apply(lambda x: to_reais(x))
         df_out_vereador['mes_ano'] = df_out_vereador['mes_ano'].apply(lambda x: x.strftime('%m/%Y'))
         df_out_vereador['proporcao_relacao_LS'] = df_out_vereador['proporcao_relacao_LS'].apply(lambda x: round(x, 2))
         st.dataframe(df_out_vereador[[

@@ -38,3 +38,27 @@ def clean_text(sentence, clear_digit=True, clear_punct=True):
     sentence = sentence.strip()
     sentence = ''.join(sentence.split(' '))
     return sentence
+
+
+
+def to_reais(value):
+    value_str = f"{value:.2f}"
+    value_str = value_str.replace(".", ",")
+    if len(value_str) >= 7:
+        a = value_str.split(",")[1]
+        b = value_str.split(",")[0]
+    else:
+        return 'R$ ' + value_str
+    contador = 1
+    lista = []
+    resto = b
+    for digit in range(len(b)):
+        if contador % 3 == 0:
+            lista.append(resto[-contador:])
+            resto = resto[:-contador]
+            contador = 0
+        contador += 1
+    if len(resto) != 0:
+        lista.append(resto)
+    lista.reverse()
+    return 'R$ ' + ".".join(lista) + "," + a
