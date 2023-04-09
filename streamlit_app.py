@@ -138,12 +138,15 @@ def main():
         df_rank_vereador_dez_menores['valor'] = [to_reais(v) for v in df_rank_vereador_dez_menores['valor']]
         df_rank_vereador['valor'] = [to_reais(v) for v in df_rank_vereador['valor']]
         df_rank_vereador = df_rank_vereador.rename(columns={'valor': 'Valor Médio Mensal'})
+        df_rank_vereador = df_rank_vereador.rename_axis('Vereador')
+        df_rank_vereador_dez_menores = df_rank_vereador_dez_menores.rename_axis('Vereadores')
         df_rank_vereador_dez_menores = df_rank_vereador_dez_menores.rename(columns={'valor': 'Valor Médio Mensal'})
         df_rank_outlier = df_outlier.groupby('vereador').agg(
             qtde=('valor', lambda x: len(x)),
         )
         df_rank_outlier = df_rank_outlier.sort_values('qtde', ascending=False)
         df_rank_outlier = df_rank_outlier.rename(columns={'qtde': 'Qtde de Outliers'})
+        df_rank_outlier = df_rank_outlier.rename_axis('Vereadores')
 
         st.write('----')
         col1, col2, col3 = st.columns(3)
