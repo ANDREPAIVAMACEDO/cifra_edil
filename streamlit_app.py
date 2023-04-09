@@ -125,7 +125,7 @@ def main():
         )
         chart = chart1 + chart2
 
-        st.write(f'**Tamanho da Amostra**: {n} NF')
+        st.write(f'**Quantidade de NF**: {n}')
         st.write(f'**Média**: {to_reais(u)}')
         st.write(f'**Desvio Padrão**: {to_reais(sd)}')
         st.write(f'**Limite Superior Calculado**: {to_reais(limite)}')
@@ -134,6 +134,8 @@ def main():
 
         # TOP vereadores mais/menos gastoes e Mais outliers
         df_rank_vereador = df_vereador_avg.sort_values(['valor'], ascending=False)
+        df_rank_vereador_dez_menores = df_rank_vereador.tail(10).sort_values(['valor'])
+        df_rank_vereador_dez_menores['valor'] = [to_reais(v) for v in df_rank_vereador_dez_menores['valor']]
         df_rank_vereador['valor'] = [to_reais(v) for v in df_rank_vereador['valor']]
         df_rank_vereador = df_rank_vereador.rename(columns={'valor': 'Valor Médio Mensal'})
         df_rank_outlier = df_outlier.groupby('vereador').agg(
@@ -147,7 +149,7 @@ def main():
         col1.write('#### Vereadores **mais** Reembolsados')
         col1.dataframe(df_rank_vereador.head(10))
         col2.write('#### Vereadores **menos** Reembolsados')
-        col2.dataframe(df_rank_vereador.tail(10).sort_index(ascending=False))
+        col2.dataframe(df_rank_vereador_dez_menores)
         col3.write('#### Vereadores com mais NF de valor elevado')
         col3.dataframe(df_rank_outlier.head(10))
 
